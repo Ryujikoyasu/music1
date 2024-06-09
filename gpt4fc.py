@@ -2,14 +2,22 @@ import json
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from functions import GO_TO, GO_ALONG, identify_plant, sing_folk_song, serve_drink
+from functions import GO_TO, GO_ALONG, sing_folk_song, serve_drink
+import google.generativeai as genai
+from identify_plant import identify_plant
+
+### GPT-4oは会話やfunction calling担当．Geminiは作詞担当． ###
 
 load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
 client = OpenAI(api_key=openai_key)
 
+GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
+genai.configure(api_key=GOOGLE_API_KEY)
+
 # --- Function Calling の設定 ---
 tools = [
+  ### 植物に関するもの ###
   {
     "type": "function",
     "function": {
@@ -21,11 +29,30 @@ tools = [
       },
     }
   },
+
+    ### ロボットの行動に関するもの ###
   {
     "type": "function",
     "function": {
       "name": "GO_TO",
-      "description": "ユーザーがロボットに人追跡や移動を指示したときに呼び出します。",
+      "description": "ユーザーがロボットに対象物への移動を指示したときに呼び出します。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "移動先の対象"
+          }
+        },
+        "required": ["target"]
+      }
+    }
+  },
+    {
+    "type": "function",
+    "function": {
+      "name": "GO_TO_PERSON",
+      "description": "ユーザーがロボットに追従するよう指示したときに呼び出します。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -76,7 +103,7 @@ tools = [
     "type": "function",
     "function": {
       "name": "serve_drink",
-      "description": "ユーザーが飲み物をほしがっているときに呼び出します。",
+      "description": "ユーザーが休憩を示唆したとき・飲み物をほしがっているときに呼び出します。",
       "parameters": {
         "type": "object",
         "properties": {},
@@ -97,6 +124,7 @@ def process_user_input(user_input, context=[]):
   Returns:
       str: ロボットの応答
   """
+
 
   response = client.chat.completions.create(
       model="gpt-4o",
@@ -120,7 +148,7 @@ def process_user_input(user_input, context=[]):
 
       # 関数を実行
       if function_name == "identify_plant":
-          result = identify_plant()
+          result = identify_plant(user_input)
       elif function_name == "GO_TO":
           result = GO_TO(function_args.get("target"))
       elif function_name == "GO_ALONG":
