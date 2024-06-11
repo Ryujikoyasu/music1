@@ -8,7 +8,7 @@ load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
 client = OpenAI(api_key=openai_key)
 
-def capture_image_from__camera(device_id=2):
+def capture_image_from__camera(device_id=0):
     cap = cv2.VideoCapture(device_id)
     ret, frame = cap.read()
     if not ret:
@@ -16,6 +16,12 @@ def capture_image_from__camera(device_id=2):
         return
     image_path = "temp.jpg"
     cv2.imwrite(image_path, frame)
+
+    # 画像を表示
+    cv2.imshow("Captured Image", frame)
+    cv2.waitKey(0)  # キーが押されるまで待機
+    cv2.destroyAllWindows()
+    
     cap.release()
     # cv2.destroyAllWindows()
     return image_path

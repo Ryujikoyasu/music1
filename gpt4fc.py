@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, serve_drink, stream_speech
+
 import google.generativeai as genai
 from identify_plant import identify_plant, explain_plant
 
@@ -126,6 +127,17 @@ tools = [
         "properties": {},
       },
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "greeting_with_name",
+      "description": "ユーザーが挨拶してきたときに呼び出します。",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+      },
+    }
   }
 ]
 
@@ -156,6 +168,10 @@ def process_user_input(user_input, context=[]):
 
   # モデルの応答を取得
   response_message = response.choices[0].message
+
+  # コンテキストのサイズを制限
+  if len(context) > 20:
+      context = context[-20:]
 
   # 関数呼び出しがある場合
   if response_message.tool_calls:

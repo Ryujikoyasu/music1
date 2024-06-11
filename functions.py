@@ -38,12 +38,12 @@ def sing_folk_song(target):
   # この歌詞から音楽を生成する
   ### api 
 
-  return f"歌います！「{target}」の歌ですね！\n{response.text}"
+  return f"{target} {response.text}"
 
 # --- サービスレベルの関数 ---
 def serve_drink():
   return "冷たいお飲み物はいかがですか〜"
-
+   
 
 ### 他の便利な関数
 
@@ -62,6 +62,7 @@ def stream_speech(text):
 
   except Exception as e:
     print(f"音声生成中にエラーが発生しました: {e}")
+
 
 def main():
 
