@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, serve_drink, stream_speech
-
+from face import greeting_with_name
 import google.generativeai as genai
 from identify_plant import identify_plant, explain_plant
 
@@ -194,6 +194,8 @@ def process_user_input(user_input, context=[]):
         result_type, result = "audio", sing_folk_song(function_args.get("target"))
     elif function_name == "serve_drink":
         result_type, result = "text", serve_drink()
+    elif function_name == "greeting_with_name":
+        result_type, result = "text", greeting_with_name(user_input)
     else:
         result_type, result = "text", f"エラー：関数 '{function_name}' は定義されていません。"
 
@@ -215,6 +217,8 @@ while True:
     user_input = input("あなた：")
     function_name, result_type, result, context = process_user_input(user_input, context)
     if function_name == "identify_plant" or function_name == "explain_plant":
+        stream_speech(result)
+    elif function_name == "greeting_with_name":
         stream_speech(result)
     else:
         print("ロボット：", result)

@@ -3,35 +3,15 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import cv2
 import base64
+from functions import capture_image_from__camera, encode_image
 
 load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
 client = OpenAI(api_key=openai_key)
 
-def capture_image_from__camera(device_id=0):
-    cap = cv2.VideoCapture(device_id)
-    ret, frame = cap.read()
-    if not ret:
-        print("failed to capture image")
-        return
-    image_path = "temp.jpg"
-    cv2.imwrite(image_path, frame)
-
-    # 画像を表示
-    cv2.imshow("Captured Image", frame)
-    cv2.waitKey(0)  # キーが押されるまで待機
-    cv2.destroyAllWindows()
-    
-    cap.release()
-    # cv2.destroyAllWindows()
-    return image_path
-
-def encode_image(image_path):
-  with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
 
 def identify_plant(user_input):
-    image_path = capture_image_from__camera()
+    _, image_path = capture_image_from__camera()
     base64_image = encode_image(image_path)
 
     response = client.chat.completions.create(

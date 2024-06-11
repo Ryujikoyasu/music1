@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 import pyaudio
 import wave
+import cv2
+import base64
 
 load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
@@ -47,18 +49,40 @@ def serve_drink():
 
 ### 他の便利な関数
 
+def encode_image(image_path):
+  with open(image_path, "rb") as image_file:
+    return base64.b64encode(image_file.read()).decode('utf-8')
+
+def capture_image_from__camera(device_id=0):
+    cap = cv2.VideoCapture(device_id)
+    ret, frame = cap.read()
+    if not ret:
+        print("failed to capture image")
+        return
+    image_path = "temp.jpg"
+    cv2.imwrite(image_path, frame)
+
+    # # 画像を表示
+    # cv2.imshow("Captured Image", frame)
+    # cv2.waitKey(0)  # キーが押されるまで待機
+    # cv2.destroyAllWindows()
+    
+    cap.release()
+    # cv2.destroyAllWindows()
+    return frame, image_path
+
 # OpenAI APIを使ってテキストを音声に変換し、ストリーミング再生する
 def stream_speech(text):
   """OpenAI APIを使ってテキストを音声に変換し、ストリーミング再生する。"""
   client = OpenAI(api_key=openai_key)
   try:
-    with open("output.mp3", "wb") as f:
+    with open("./media/output.mp3", "wb") as f:
       response = client.audio.speech.create(
           model="tts-1",
           voice="alloy",  # 適切な音声を選択
           input=text,
       )
-      response.stream_to_file("output.mp3")
+      response.stream_to_file("./media/output.mp3")
 
   except Exception as e:
     print(f"音声生成中にエラーが発生しました: {e}")
