@@ -119,9 +119,9 @@ def main():
         #                 input=assistant_text,
         #             )
         #             # 音声データを取得して再生
-        #             audio_stream = io.BytesIO(tts_response.content)
-        #             sound = AudioSegment.from_file(audio_stream, format="mp3")
-        #             play(sound)
+            #             audio_stream = io.BytesIO(tts_response.content)
+            #             sound = AudioSegment.from_file(audio_stream, format="mp3")
+            #             play(sound)
 
         #             assistant_text = ""  # テキストをリセット
 

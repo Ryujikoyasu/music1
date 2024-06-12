@@ -3,7 +3,7 @@ import face_recognition
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from functions import capture_image_from__camera, encode_image
+from functions import capture_image_from__camera, encode_image, chatgpt_stream_with_image
 
 load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
@@ -75,46 +75,33 @@ def greeting_with_name(user_input):
         # カンマ区切りで名前を表示. 「初めましてさん」と呼ぶことで、名前が登録されていない場合に対応
         # 顔を認識できなかった場合は，適当に誤魔化す
         print(",".join(recognized_names))
-        response = client.chat.completions.create(
-            model='gpt-4o',
-            messages=[
-                {
-                    'role': 'system',
-                    'content': """あなたは里山で動く対話型のロボットです，\
+
+        system_prompt =  """あなたは里山で動く対話型のロボットです，\
                                 地域の人が挨拶をしてきたので，挨拶をし返してください．\
                                 ただし，user_inputとしてユーザの挨拶文を,\
                                     user_nameとして画像に写っている人の名前をリストで与えます．\
                                 ただし，名前がわからない場合は「初めましてさん」としています．\
                                     また，名前が複数ある場合は，カンマ区切りで名前を教えます．\
                                         フレンドリーかつ簡潔に挨拶をしてください．\
-                                        誰もいない場合は，適当に誤魔化してください．\
-                                            画像を見て，状況を把握しても良いですね．"""
-                },
-                {
-                    'role': 'user',
-                    'content': [
-                        {"type":"text",
-                        "text": f"user_input:{user_input},user_name:{recognized_names}"
-                        },
-                        {"type":"image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
-            ],
-        )
+                                        画像を見て，状況を把握しても良いですね．"""
+        text = f"user_input:{user_input},user_name:{recognized_names}"
 
-        print(response.choices[0].message.content)
+        response_stream = chatgpt_stream_with_image(text, system_prompt, base64_image)
 
-        return response.choices[0].message.content
+    else:
+        system_prompt =  """あなたは里山で動く対話型のロボットです，\
+                    地域の人が挨拶をしてきたのですが，あなたはその人の顔が見えませんでした．\
+                            そこで，挨拶をするとともに，「どこにいるのよ」など，顔が見えなかったことを伝えてください．"""
+        
+        response_stream = chatgpt_stream_with_image(user_input, system_prompt, base64_image)
 
 
-    # キャプチャした画像を表示 (オプション)
-    cv2.imshow('Captured Image', frame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # # キャプチャした画像を表示 (オプション)
+    # cv2.imshow('Captured Image', frame)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    return response_stream
 
 
 if __name__ == "__main__":

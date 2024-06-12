@@ -3,10 +3,14 @@ from openai import OpenAI
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-import pyaudio
-import wave
+import io
+from pydub import AudioSegment
+from pydub.playback import play
 import cv2
 import base64
+import sounddevice as sd
+import numpy as np
+from io import BytesIO
 
 load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
@@ -43,15 +47,16 @@ def sing_folk_song(target):
   return f"{target} {response.text}"
 
 # --- サービスレベルの関数 ---
-def serve_drink():
-  return "冷たいお飲み物はいかがですか〜"
-   
+def take_break(user_input):
+  system_prompt = """あなたは里山の対話型ロボットです．\
+          農作業を終えたユーザの言葉を聞いて，疲れを労ったり冷たい飲み物を勧めたりします．"""
+  response_stream = chatgpt_stream(user_input, system_prompt)
+  return response_stream
 
 ### 他の便利な関数
-
 def encode_image(image_path):
-  with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
+    with open(image_path, "rb") as image_file:
+      return base64.b64encode(image_file.read()).decode('utf-8')
 
 def capture_image_from__camera(device_id=0):
     cap = cv2.VideoCapture(device_id)
@@ -71,57 +76,87 @@ def capture_image_from__camera(device_id=0):
     # cv2.destroyAllWindows()
     return frame, image_path
 
-# OpenAI APIを使ってテキストを音声に変換し、ストリーミング再生する
-def stream_speech(text):
-  """OpenAI APIを使ってテキストを音声に変換し、ストリーミング再生する。"""
-  client = OpenAI(api_key=openai_key)
-  try:
-    with open("./media/output.mp3", "wb") as f:
-      response = client.audio.speech.create(
-          model="tts-1",
-          voice="alloy",  # 適切な音声を選択
-          input=text,
-      )
-      response.stream_to_file("./media/output.mp3")
+# OpenAI APIを使ってストリーミングチャットを行う
+def chatgpt_stream(user_input, system_prompt):
+    response_stream = client.chat.completions.create(
+                model='gpt-4o',
+                messages=[
+                    {
+                        'role': 'system',
+                        'content': system_prompt
+                    },
+                    {
+                        'role': 'user',
+                        'content': [
+                            {"type":"text",
+                            "text": user_input
+                            }
+                        ]
+                    }
+                ],
+                stream=True
+            )
 
-  except Exception as e:
-    print(f"音声生成中にエラーが発生しました: {e}")
+    return response_stream
+
+def chatgpt_stream_with_image(user_input, system_prompt, base64_image):
+    response_stream = client.chat.completions.create(
+        model='gpt-4o',
+        messages=[
+            {
+                'role': 'system',
+                'content': system_prompt
+            },
+            {
+                'role': 'user',
+                'content': [
+                    {"type":"text",
+                    "text": user_input
+                    },
+                    {"type":"image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}"
+                        }
+                    }
+                ]
+            }
+        ],
+        stream=True
+    )
+
+    return response_stream
+
+
+# OpenAI APIを使ってストリーミングテキストを一文一文音声に変換し再生する
+def stream_sound(response_stream):  
+    assistant_text = ""
+    for chunk in response_stream:
+        bot_response = chunk.choices[0].delta.content
+        if bot_response:
+            # 一文ずつTTSに入力するため、文末を検出するまでテキストを溜め込む
+            assistant_text += bot_response
+            if any(char in assistant_text for char in ".．。!！?？"):
+                # 文末が検出された場合、TTSに入力
+                print("Assistant:", assistant_text)
+                # TTSを使用して音声に変換
+                tts_response = client.audio.speech.create(
+                    model="tts-1",
+                    voice="nova",
+                    input=assistant_text,
+                )
+                # 音声データを取得して再生
+                audio_stream = io.BytesIO(tts_response.content)
+                sound = AudioSegment.from_file(audio_stream, format="mp3")
+                play(sound)
+                assistant_text = ""
 
 
 def main():
-
-    response = client.audio.speech.create(
-        model="tts-1",
-        voice="alloy",
-        input="この修正により、エラーを回避し、OpenAI APIから取得した音声データをファイルに保存できるようになります。",
-        response_format="mp3",
-    )
-
-    with open("output.mp3", "wb") as audio_file:
-        audio_file.write(response.content)
-
-    # PyAudioを初期化
-    p = pyaudio.PyAudio()
-
-    # 音声ファイルを開く
-    wf = wave.open("output.mp3", 'rb')
-
-    # ストリームを開く
-    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                    channels=wf.getnchannels(),
-                    rate=wf.getframerate(),
-                    output=True)
-
-    # チャンクごとにデータを読み込み、再生
-    data = wf.readframes(1024)
-    while data:
-        stream.write(data)
-        data = wf.readframes(1024)
-
-    # 再生終了処理
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
+    user_input = "こんにちは"
+    system_prompt = "あなたは里山で動く対話型のロボットです，ユーザからの入力に対して、返答してください．ただし，user_inputとしてユーザの入力文を与えます．フレンドリーかつ簡潔に返答してください．"
+    response_stream = chatgpt_stream(user_input, system_prompt)
+    stream_sound(response_stream)
   
+
 if __name__ == "__main__":
     main()

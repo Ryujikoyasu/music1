@@ -2,7 +2,7 @@ import json
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, serve_drink, stream_speech
+from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, take_break, stream_sound, chatgpt_stream, chatgpt_stream_with_image
 from face import greeting_with_name
 import google.generativeai as genai
 from identify_plant import identify_plant, explain_plant
@@ -120,7 +120,7 @@ tools = [
   {
     "type": "function",
     "function": {
-      "name": "serve_drink",
+      "name": "take_break",
       "description": "ユーザーが休憩を示唆したとき・飲み物をほしがっているときに呼び出します。",
       "parameters": {
         "type": "object",
@@ -132,7 +132,7 @@ tools = [
     "type": "function",
     "function": {
       "name": "greeting_with_name",
-      "description": "ユーザーが挨拶してきたときに呼び出します。",
+      "description": "ユーザーが挨拶の言葉をかけてきたときに呼び出します。",
       "parameters": {
         "type": "object",
         "properties": {},
@@ -192,8 +192,8 @@ def process_user_input(user_input, context=[]):
         result_type, result = "text", GO_TO_PERSON(function_args.get("target"))
     elif function_name == "sing_folk_song":
         result_type, result = "audio", sing_folk_song(function_args.get("target"))
-    elif function_name == "serve_drink":
-        result_type, result = "text", serve_drink()
+    elif function_name == "take_break":
+        result_type, result = "text", take_break(user_input)
     elif function_name == "greeting_with_name":
         result_type, result = "text", greeting_with_name(user_input)
     else:
@@ -201,24 +201,39 @@ def process_user_input(user_input, context=[]):
 
     # コンテキストを更新
     context.append({"role": "user", "content": user_input})
+    ### resultはメッセージの内容ではないので，ここはかえる
     context.append({"role": "assistant", "content": result})
+
     return function_name, result_type, result, context
 
-  # 関数呼び出しがない場合
+  # 関数呼び出しがない場合は，ユーザと通常の会話をする
   else:
+    system_prompt = """あなたは里山の対話型ロボットです．\
+        ユーザの入力に対して，適当な返答を行います．\
+          ただし，あなたが行動に移せなさそうな場合は，ギャルっぽく断るようにしてください．"""
+    response_stream = chatgpt_stream(user_input, system_prompt)
+    print(response_stream)
       # コンテキストを更新
-      context.append({"role": "user", "content": user_input})
-      context.append({"role": "assistant", "content": response_message.content})
-      return response_message.content, context
+    context.append({"role": "user", "content": user_input})
+    context.append({"role": "assistant", "content": response_stream})
+    
+    return "no_function", "text", response_stream, context  # ダミーの値を追加
 
 # --- 対話例 ---
 context = []
 while True:
     user_input = input("あなた：")
+
     function_name, result_type, result, context = process_user_input(user_input, context)
     if function_name == "identify_plant" or function_name == "explain_plant":
-        stream_speech(result)
+        stream_sound(result)
     elif function_name == "greeting_with_name":
-        stream_speech(result)
+        stream_sound(result)
+    elif function_name == "take_break":
+        stream_sound(result)
+    elif function_name == "no_function":
+        stream_sound(result)
     else:
         print("ロボット：", result)
+
+    print("コンテキスト：", context)
