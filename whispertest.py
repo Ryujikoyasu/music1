@@ -19,7 +19,6 @@ RATE = 44100
 CHUNK = 1024
 WAVE_OUTPUT_FILENAME = "./media/output.wav"
 
-audio = pyaudio.PyAudio()
 
 def record_audio():
     """スペースキーが押されたときに呼び出される録音関数"""
@@ -28,6 +27,8 @@ def record_audio():
     if not recording:
         # 録音開始
         print("録音開始。もう一度スペースキーを押すと停止します。")
+        # PyAudioインスタンスを関数内で作成
+        audio = pyaudio.PyAudio()
         stream = audio.open(format=FORMAT, channels=CHANNELS,
                         rate=RATE, input=True,
                         frames_per_buffer=CHUNK)
@@ -52,6 +53,7 @@ def record_audio():
         wf.writeframes(b''.join(frames))
         wf.close()
         print(f"録音を停止しました。音声を {WAVE_OUTPUT_FILENAME} に保存しました。")
+        audio.terminate()
 
 # グローバル変数で録音状態を管理
 recording = False
@@ -91,15 +93,14 @@ def main():
     """メイン関数"""
     global recording
 
-    print("スペースキーを押すと録音が開始します。")
-    keyboard.wait('space')  # 最初のスペースキー押下を待機
+    while True:
 
-    # audioオブジェクトを終了
-    audio.terminate()
-    
-    # 録音終了後、文字起こしを実行
-    audio_path = "./media/output.wav"
-    transcribe_audio(audio_path)
+        print("スペースキーを押すと録音が開始します。")
+        keyboard.wait('space')  # 最初のスペースキー押下を待機
+        
+        # 録音終了後、文字起こしを実行
+        audio_path = "./media/output.wav"
+        transcribe_audio(audio_path)
 
 if __name__ == "__main__":
     main()
