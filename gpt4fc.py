@@ -36,17 +36,17 @@ tools = [
       },
     }
   },
-    {
-    "type": "function",
-    "function": {
-      "name": "explain_plant",
-      "description": "ユーザーが植物の名前を指定して説明を尋ねたときに呼び出します。",
-      "parameters": {
-        "type": "object",
-        "properties": {},
-        },
-      }
-    },
+  {
+  "type": "function",
+  "function": {
+    "name": "explain_plant",
+    "description": "ユーザーが植物の名前を指定して説明を尋ねたときに呼び出します。",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      },
+    }
+  },
 
     ### ロボットの行動に関するもの ###
   {

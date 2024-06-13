@@ -47,7 +47,7 @@ def register_new_person(name, num_pictures=5):
     video_capture.release()
     cv2.destroyAllWindows()
 
-    print(f"{name} さんの顔写真を {count} 枚保存しました。")
+    print(f"{name} の顔写真を {count} 枚保存しました。")
 
 # --- 使用例 ---
-register_new_person("ほりさん")
+register_new_person("ほりちゃん")
