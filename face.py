@@ -34,16 +34,20 @@ def face_registration():
                     # 人物名とエンコーディングを追加
                     known_face_encodings.append(face_encoding)
                     known_face_names.append(person_name)
+    
+    print("顔画像と名前の対応を取得しました")
 
     return known_face_encodings, known_face_names
                 
-def greeting_with_name(user_input):
-    # 顔画像と名前の対応を取得
-    known_face_encodings, known_face_names = face_registration()
+def greeting_with_name(user_input, known_face_encodings, known_face_names):
+    # 顔画像と名前の対応を取得は，時短のため，gpt4fcで行う．
+    # known_face_encodings, known_face_names = face_registration()
 
-    print("顔画像と名前の対応を取得しました")
     # カメラから1フレームだけキャプチャ
     frame, image_path = capture_image_from__camera()
+    if frame is None:
+        return "カメラが見つかりませんでした"
+
     base64_image = encode_image(image_path)
 
     # 顔認識処理

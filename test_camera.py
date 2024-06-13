@@ -9,7 +9,7 @@ ret, frame = cap.read()
 if not ret:
     print("Failed to capture image")
 
-image_path = "temp.jpg"
+image_path = "./media/temp.jpg"
 cv2.imwrite(image_path, frame)
 
 # 画像を表示

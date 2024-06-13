@@ -126,7 +126,6 @@ def chatgpt_stream_with_image(user_input, system_prompt, base64_image):
 
     return response_stream
 
-
 # OpenAI APIを使ってストリーミングテキストを一文一文音声に変換し再生する
 def stream_sound(response_stream):  
     assistant_text = ""

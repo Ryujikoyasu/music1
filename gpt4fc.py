@@ -3,18 +3,24 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, take_break, stream_sound, chatgpt_stream, chatgpt_stream_with_image
-from face import greeting_with_name
+from face import greeting_with_name, face_registration
 import google.generativeai as genai
 from identify_plant import identify_plant, explain_plant
+import keyboard
+from whispertest import transcribe_audio, record_audio
+
 
 ### GPT-4oは会話やfunction calling担当．Geminiは作詞担当． ###
-
 load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
 client = OpenAI(api_key=openai_key)
 
 GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
 genai.configure(api_key=GOOGLE_API_KEY)
+
+### 初期化の処理
+# 顔を覚えるやつ
+known_face_encodings, known_face_names = face_registration()
 
 # --- Function Calling の設定 ---
 tools = [
@@ -37,16 +43,10 @@ tools = [
       "description": "ユーザーが植物の名前を指定して説明を尋ねたときに呼び出します。",
       "parameters": {
         "type": "object",
-        "properties": {
-          "target": {
-            "type": "string",
-            "description": "植物名"
-          }
+        "properties": {},
         },
-        "required": ["target"]
       }
-    }
-  },
+    },
 
     ### ロボットの行動に関するもの ###
   {
@@ -132,7 +132,7 @@ tools = [
     "type": "function",
     "function": {
       "name": "greeting_with_name",
-      "description": "ユーザーが挨拶の言葉をかけてきたときに呼び出します。",
+      "description": "ユーザーが「こんにちは」のように挨拶してきたときに呼び出します。",
       "parameters": {
         "type": "object",
         "properties": {},
@@ -195,7 +195,7 @@ def process_user_input(user_input, context=[]):
     elif function_name == "take_break":
         result_type, result = "text", take_break(user_input)
     elif function_name == "greeting_with_name":
-        result_type, result = "text", greeting_with_name(user_input)
+        result_type, result = "text", greeting_with_name(user_input, known_face_encodings, known_face_names)
     else:
         result_type, result = "text", f"エラー：関数 '{function_name}' は定義されていません。"
 
@@ -219,11 +219,25 @@ def process_user_input(user_input, context=[]):
     
     return "no_function", "text", response_stream, context  # ダミーの値を追加
 
+
 # --- 対話例 ---
+
+# スペースキーが押された時のイベントを設定
+# keyboard.add_hotkey('space', record_audio)
+
 context = []
 while True:
-    user_input = input("あなた：")
-
+    
+    print("スペースキーを押すと録音が開始します。")
+    keyboard.wait('space')  # 最初のスペースキー押下を待機
+    # 録音終了後、文字起こしを実行
+    audio_path = "./media/output.wav"
+    user_input = transcribe_audio(audio_path)
+    print("ユーザー：", user_input)
+    
+    if user_input is None:
+        continue
+    
     function_name, result_type, result, context = process_user_input(user_input, context)
     if function_name == "identify_plant" or function_name == "explain_plant":
         stream_sound(result)
@@ -237,3 +251,5 @@ while True:
         print("ロボット：", result)
 
     print("コンテキスト：", context)
+  
+    

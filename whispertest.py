@@ -83,10 +83,12 @@ def transcribe_audio(audio_path):
                 response_format="text"
             )
         print("Transcription:", transcription)
+        
+        return transcription
 
     except Exception as e:
         print(f"エラーが発生しました: {e}")
-
+        return None
 
 
 def main():
@@ -101,6 +103,12 @@ def main():
         # 録音終了後、文字起こしを実行
         audio_path = "./media/output.wav"
         transcribe_audio(audio_path)
+        user_input = transcribe_audio(audio_path)
+        print("ユーザー：", user_input)
+        response_stream = chatgpt_stream(user_input)
+        print("ロボット：", response_stream)
+
+
 
 if __name__ == "__main__":
     main()
