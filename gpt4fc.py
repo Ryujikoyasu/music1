@@ -2,7 +2,7 @@ import json
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, take_break, stream_sound, chatgpt_stream, chatgpt_stream_with_image
+from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, take_break, stream_sound_openai, stream_sound_vvox,  chatgpt_stream, chatgpt_stream_with_image
 from face import greeting_with_name, face_registration
 import google.generativeai as genai
 from identify_plant import identify_plant, explain_plant
@@ -240,13 +240,13 @@ while True:
     
     function_name, result_type, result, context = process_user_input(user_input, context)
     if function_name == "identify_plant" or function_name == "explain_plant":
-        stream_sound(result)
+        stream_sound_vvox(result)
     elif function_name == "greeting_with_name":
-        stream_sound(result)
+        stream_sound_vvox(result)
     elif function_name == "take_break":
-        stream_sound(result)
+        stream_sound_vvox(result)
     elif function_name == "no_function":
-        stream_sound(result)
+        stream_sound_vvox(result)
     else:
         print("ロボット：", result)
 

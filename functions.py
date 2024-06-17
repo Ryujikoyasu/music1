@@ -11,6 +11,7 @@ import base64
 import sounddevice as sd
 import numpy as np
 from io import BytesIO
+from voicebox_test import vvox_test
 
 load_dotenv()
 openai_key = os.environ['OpenAI_API_KEY']
@@ -127,7 +128,7 @@ def chatgpt_stream_with_image(user_input, system_prompt, base64_image):
     return response_stream
 
 # OpenAI APIを使ってストリーミングテキストを一文一文音声に変換し再生する
-def stream_sound(response_stream):  
+def stream_sound_openai(response_stream):  
     assistant_text = ""
     for chunk in response_stream:
         bot_response = chunk.choices[0].delta.content
@@ -149,12 +150,23 @@ def stream_sound(response_stream):
                 play(sound)
                 assistant_text = ""
 
+def stream_sound_vvox(response_stream):
+    assistant_text = ""
+    for chunk in response_stream:
+        bot_response = chunk.choices[0].delta.content
+        if bot_response:
+            assistant_text += bot_response
+            if any(char in assistant_text for char in ".．。!！?？"):
+                print("Assistant:", assistant_text)
+                vvox_test(assistant_text)
+                assistant_text = ""
+
 
 def main():
     user_input = "こんにちは"
     system_prompt = "あなたは里山で動く対話型のロボットです，ユーザからの入力に対して、返答してください．ただし，user_inputとしてユーザの入力文を与えます．フレンドリーかつ簡潔に返答してください．"
     response_stream = chatgpt_stream(user_input, system_prompt)
-    stream_sound(response_stream)
+    stream_sound_openai(response_stream)
   
 
 if __name__ == "__main__":
