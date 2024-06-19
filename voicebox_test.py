@@ -29,6 +29,13 @@ def vvox_test(text):
     
     # 再生処理
     voice = synthesis.content
+
+    # サンプリングレート (Vvoxは24000Hz)
+    sample_rate = 24000
+    # 前後50msをカット　ノイズ対策
+    trim_bytes = int(sample_rate * 0.05 * 2)  # 50ms分のバイト数 (16bit=2byte)
+    trimmed_voice = voice[trim_bytes : len(voice) - trim_bytes]
+
     pya = pyaudio.PyAudio()
     
     # サンプリングレートが24000以外だとずんだもんが高音になったり低音になったりする
@@ -37,7 +44,7 @@ def vvox_test(text):
                       rate=24000,
                       output=True)
     
-    stream.write(voice)
+    stream.write(trimmed_voice)
     stream.stop_stream()
     stream.close()
     pya.terminate()
