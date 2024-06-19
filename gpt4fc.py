@@ -20,7 +20,7 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 ### 初期化の処理
 # 顔を覚えるやつ
-known_face_encodings, known_face_names = face_registration()
+# known_face_encodings, known_face_names = face_registration()
 
 # --- Function Calling の設定 ---
 tools = [
@@ -183,7 +183,7 @@ def process_user_input(user_input, context=[]):
     if function_name == "identify_plant":
         result_type, result = "text", identify_plant(user_input)
     elif function_name == "explain_plant":
-        result_type, result = "text", explain_plant(function_args.get("target"))
+        result_type, result = "text", explain_plant(user_input)
     elif function_name == "GO_TO":
         result_type, result = "text", GO_TO(function_args.get("target"))
     elif function_name == "GO_ALONG":
@@ -201,7 +201,7 @@ def process_user_input(user_input, context=[]):
 
     # コンテキストを更新
     context.append({"role": "user", "content": user_input})
-    ### resultはメッセージの内容ではないので，ここはかえる
+    # print(type(result))
     context.append({"role": "assistant", "content": result})
 
     return function_name, result_type, result, context
