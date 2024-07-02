@@ -32,20 +32,28 @@ def GO_TO_PERSON(target):
 
 # --- タスクレベルの関数 ---
 
-def sing_folk_song(target):
+def sing_song(target):
   # Geminiが作詞して，Sunoが音楽生成
-  model = genai.GenerativeModel(model_name="gemini-1.5-pro")
-  prompt = f"""{target}についての歌詞を書いてください．ただし，子供から大人まで「へぇー」って思えるような\
-    生態や特徴，利用の仕方などを積極的に盛り込んでください．歌は２番構成で，なるべく短く，児童曲スタイルで書いて．\
-    漢字は使わずに平仮名と片仮名のみで書いてください．
-      短い歌詞なので，余計なワードや繰り返しはなるべく含めないことで情報量を多くしてください．\
-        あなたの出力は全て歌詞になるので，「（イントロ）」などの余計な文字を含めてはいけません．"""
-  response = model.generate_content(prompt)
+#   model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+#   prompt = f"""{target}についての歌詞を書いてください．ただし，子供から大人まで「へぇー」って思えるような\
+#     生態や特徴，利用の仕方などを積極的に盛り込んでください．歌は２番構成で，なるべく短く，児童曲スタイルで書いて．\
+#     漢字は使わずに平仮名と片仮名のみで書いてください．
+#       短い歌詞なので，余計なワードや繰り返しはなるべく含めないことで情報量を多くしてください．\
+#         あなたの出力は全て歌詞になるので，「（イントロ）」などの余計な文字を含めてはいけません．"""
+#   response = model.generate_content(prompt)
   
   # この歌詞から音楽を生成する
   ### api 
 
-  return f"{target} {response.text}"
+  #場繋ぎの言葉を生成
+  system_prompt = f"""現在，ユーザのリクエストによって{target}についての音楽を生成中です．\
+      あなたは，繋ぎ役として{target}について，面白い小話を１つしてください．\
+        子供から大人まで「へぇー」って思えるような 豆知識が良いです，\
+            退屈させないように，かつ端的・簡潔にお願いします．\
+        歌のリクエストをしたのに歌わず話すのは不自然なので， 話始めや終わりは工夫してください．"""
+  response_stream = chatgpt_stream(target, system_prompt)
+
+  return response_stream
 
 # --- サービスレベルの関数 ---
 def take_break(user_input):
@@ -147,7 +155,7 @@ def stream_sound_openai(response_stream):
                 # 音声データを取得して再生
                 audio_stream = io.BytesIO(tts_response.content)
                 sound = AudioSegment.from_file(audio_stream, format="mp3")
-                sound = sound.set_start(50).set_end(len(sound)-50)
+                # sound = sound.set_start(50).set_end(len(sound)-50)
                 play(sound)
                 assistant_text = ""
 

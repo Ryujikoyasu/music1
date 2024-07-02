@@ -2,7 +2,7 @@ import json
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_folk_song, take_break, stream_sound_openai, stream_sound_vvox,  chatgpt_stream, chatgpt_stream_with_image
+from functions import GO_TO, GO_ALONG, GO_TO_PERSON, sing_song, take_break, stream_sound_openai, stream_sound_vvox,  chatgpt_stream, chatgpt_stream_with_image
 from face import greeting_with_name, face_registration
 import google.generativeai as genai
 from identify_plant import identify_plant, explain_plant
@@ -103,7 +103,7 @@ tools = [
   {
     "type": "function",
     "function": {
-      "name": "sing_folk_song",
+      "name": "sing_song",
       "description": "ユーザーが歌をリクエストしたときに呼び出します。",
       "parameters": {
         "type": "object",
@@ -190,12 +190,13 @@ def process_user_input(user_input, context=[]):
         result_type, result = "text", GO_ALONG(function_args.get("target"))
     elif function_name == "GO_TO_PERSON":
         result_type, result = "text", GO_TO_PERSON(function_args.get("target"))
-    elif function_name == "sing_folk_song":
-        result_type, result = "audio", sing_folk_song(function_args.get("target"))
+
     elif function_name == "take_break":
         result_type, result = "text", take_break(user_input)
     elif function_name == "greeting_with_name":
         result_type, result = "text", greeting_with_name(user_input, known_face_encodings, known_face_names)
+    elif function_name == "sing_song":
+        result_type, result = "audio", sing_song(function_args.get("target"))
     else:
         result_type, result = "text", f"エラー：関数 '{function_name}' は定義されていません。"
 
@@ -244,6 +245,8 @@ while True:
     elif function_name == "greeting_with_name":
         stream_sound_vvox(result)
     elif function_name == "take_break":
+        stream_sound_vvox(result)
+    elif function_name == "sing_song":
         stream_sound_vvox(result)
     elif function_name == "no_function":
         stream_sound_vvox(result)
