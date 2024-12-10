@@ -2,8 +2,12 @@ import google.generativeai as genai
 import io
 import cv2
 import tempfile
+from dotenv import load_dotenv
+import os
 
-GOOGLE_API_KEY="AIzaSyD1fTa8R1zPUYn60xKxrepRVPTOvHY_vtI"
+# 環境変数の読み込み
+load_dotenv()
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 genai.configure(api_key=GOOGLE_API_KEY)
 
 system_instruction = """私は中学生の自然科学部です．自然観察をしていて，色々な生き物や植物があり，とっても楽しいです！あなたは私たちの先生で，動植物のことを楽しく教えてくれるので，みんなから好かれています．

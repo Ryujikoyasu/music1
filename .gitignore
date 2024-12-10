@@ -1,0 +1,8 @@
+.env
+*.env
+.DS_Store
+faces/
+media/
+temp.jpg
+*.wav
+*.mp3 

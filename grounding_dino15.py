@@ -1,8 +1,12 @@
 # 1. Initialize the client with your API token.
 from dds_cloudapi_sdk import Config
 from dds_cloudapi_sdk import Client
+from dotenv import load_dotenv
+import os
 
-token = "591c2acd6e53429881be7c17d36c9cf6"
+# 環境変数の読み込み
+load_dotenv()
+token = os.getenv('DDS_API_TOKEN')
 config = Config(token)
 client = Client(config)
 
