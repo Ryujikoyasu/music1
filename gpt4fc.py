@@ -20,7 +20,7 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 ### 初期化の処理
 # 顔を覚えるやつ
-# known_face_encodings, known_face_names = face_registration()
+known_face_encodings, known_face_names = face_registration()
 
 # --- Function Calling の設定 ---
 tools = [

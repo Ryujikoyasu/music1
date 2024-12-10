@@ -170,6 +170,26 @@ def stream_sound_vvox(response_stream):
                 vvox_test(assistant_text)
                 assistant_text = ""
 
+def stream_sound_gemini(text):
+    """
+    Geminiの応答テキストを音声に変換して再生する関数
+    """
+    assistant_text = ""
+    for char in text:
+        assistant_text += char
+        if any(end_char in assistant_text for end_char in ".．。!！?？"):
+            print("Assistant:", assistant_text)
+            # TTSを使用して音声に変換
+            tts_response = client.audio.speech.create(
+                model="tts-1",
+                voice="nova",
+                input=assistant_text,
+            )
+            # 音声データを取得して再生
+            audio_stream = io.BytesIO(tts_response.content)
+            sound = AudioSegment.from_file(audio_stream, format="mp3")
+            play(sound)
+            assistant_text = ""
 
 def main():
     user_input = "こんにちは"

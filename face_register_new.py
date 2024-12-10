@@ -50,4 +50,4 @@ def register_new_person(name, num_pictures=5):
     print(f"{name} の顔写真を {count} 枚保存しました。")
 
 # --- 使用例 ---
-register_new_person("ほりちゃん")
+register_new_person("まろんちゃん")
