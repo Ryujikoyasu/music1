@@ -4,15 +4,15 @@ import pyaudio
 import wave
 from datetime import datetime
 
-def vvox_test(text, save_file=True):
+def vvox_test(text, filename="voice.wav", save_file=True):
     # エンジン起動時に表示されているIP、portを指定
     host = "127.0.0.1"
     port = 50021
     
-    # 音声化する文言と話者を指定(3で標準ずんだもんになる) 42はちび式じい
+    # 音声化する文言と話者を指定(3で標準ずんだもんになる) 42はちび式じい　52は麒ヶ島宗麟
     params = (
         ('text', text),
-        ('speaker', 2),
+        ('speaker', 42),
     )
     
     # 音声合成用のクエリ作成
@@ -21,12 +21,23 @@ def vvox_test(text, save_file=True):
         params=params,
     )
     
+    # クエリパラメータの調整
+    query_data = query.json()
+    # ピッチを少し下げる
+    query_data['pitch_scale'] = 0.95
+    # 話速を少し遅くして明瞭にする
+    query_data['speed_scale'] = 0.95
+    # 音質を改善
+    query_data['volumeScale'] = 1.2
+    query_data['prePhonemeLength'] = 0.1
+    query_data['postPhonemeLength'] = 0.1
+    
     # 音声合成を実施
     synthesis = requests.post(
         f'http://{host}:{port}/synthesis',
         headers = {"Content-Type": "application/json"},
         params = params,
-        data = json.dumps(query.json())
+        data = json.dumps(query_data)
     )
     
     # 再生処理
@@ -40,28 +51,40 @@ def vvox_test(text, save_file=True):
 
     # ファイルとして保存
     if save_file:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"voice_{timestamp}.wav"
-        
         with wave.open(filename, 'wb') as wf:
             wf.setnchannels(1)  # モノラル
             wf.setsampwidth(2)  # 16bit
             wf.setframerate(sample_rate)
             wf.writeframes(trimmed_voice)
     
-    pya = pyaudio.PyAudio()
+    if not save_file:
+        pya = pyaudio.PyAudio()
+        
+        # サンプリングレートが24000以外だと高音になったり低音になったりする
+        stream = pya.open(format=pyaudio.paInt16,
+                          channels=1,
+                          rate=24000,
+                          output=True)
+        
+        stream.write(trimmed_voice)
+        stream.stop_stream()
+        stream.close()
+        pya.terminate()
+
+def process_text_file(filepath):
+    # テキストファイルを読み込む
+    with open(filepath, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
     
-    # サンプリングレートが24000以外だと高音になったり低音になったりする
-    stream = pya.open(format=pyaudio.paInt16,
-                      channels=1,
-                      rate=24000,
-                      output=True)
+    # 空行を除去
+    texts = [line.strip() for line in lines if line.strip()]
     
-    stream.write(trimmed_voice)
-    stream.stop_stream()
-    stream.close()
-    pya.terminate()
-    
+    # 一文ずつ処理
+    for i, text in enumerate(texts, 1):
+        filename = f"voice_{i:03d}.wav"
+        print(f"Generating {filename}...")
+        print(f"Text: {text}")
+        vvox_test(text, filename=filename, save_file=True)
+        
 if __name__ == "__main__":
-    text = "こんにちは，しゅうちゃん．良い天気なので今日も畑仕事頑張ろう．"
-    vvox_test(text)
+    process_text_file("nyou.txt")
